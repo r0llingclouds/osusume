@@ -1,0 +1,4 @@
+crewai>=0.30.0,<0.31.0
+crewai-tools>=0.2.5,<0.3.0
+requests>=2.31.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0 # Often useful for API keys, though not strictly needed here 
