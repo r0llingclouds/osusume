@@ -1,14 +1,15 @@
 """
-Gradio front‑end for Osusume with cover‑art gallery.
+Gradio front‑end for Osusume with integrated cover‑art + description cards.
 Run with: python -m ui.gradio_app
 """
 
 import re
+from typing import NamedTuple
 import gradio as gr
 from service import get_recommendations
 from src.anilist_query_searcher import search_anime
 
-# Intro Markdown
+# Intro text
 INTRO = (
     "## Osusume – AI‑powered anime recommender  \n"
     "Describe what you feel like watching and press **Recommend**.  \n"
@@ -18,80 +19,86 @@ INTRO = (
     "• A dark fantasy from 2020"
 )
 
-# Title extraction: support Markdown asterisks or plain text before dash
-ASTERISK_TITLE_RE = r"^\d+\.\s*\*([^*]+)\*"
-PLAIN_TITLE_RE    = r"^\d+\.\s*([^–—\-]+)"
+# Regex to capture title and description from each bulleted line
+RE_LINE = re.compile(r"^(?P<idx>\d+)\.\s*(?:\*([^*]+)\*|([^–—\-]+))\s*[–—\-]\s*(?P<desc>.+)$")
+
+class Recommendation(NamedTuple):
+    title: str
+    desc: str
 
 
-def extract_titles(markdown_text: str) -> list[str]:
+def parse_recommendations(markdown_text: str) -> list[Recommendation]:
     """
-    Parse recommendation Markdown for titles. Supports two formats:
-    1) *Title* → Markdown bold
-    2) Plain Title – hint (captures text before dash)
-    Returns list of titles in order.
+    Convert raw Markdown output into a list of Recommendation(title, desc).
+    Supports lines like:
+      1. *Title* – justification text
+      2. Title – justification text
     """
-    lines = markdown_text.splitlines()
-    titles = []
-    for line in lines:
-        # Try asterisk syntax first
-        m = re.match(ASTERISK_TITLE_RE, line)
-        if m:
-            titles.append(m.group(1).strip())
+    recs = []
+    for line in markdown_text.splitlines():
+        m = RE_LINE.match(line)
+        if not m:
             continue
-        # Fallback: plain text up to dash
-        m2 = re.match(PLAIN_TITLE_RE, line)
-        if m2:
-            titles.append(m2.group(1).strip())
-    return titles
+        # Title may be in group 2 (asterisk) or group 3 (plain)
+        title_raw = m.group(2) or m.group(3)
+        title = title_raw.strip()
+        desc = m.group('desc').strip()
+        recs.append(Recommendation(title, desc))
+    return recs
 
 
-def recommend_cb(query: str) -> tuple[list[tuple[str, str]], str]:
+def recommend_cb(query: str) -> str:
     """
-    Returns list of (cover_url, title) for gallery + raw Markdown text.
+    Returns HTML string rendering a flex‑box of cover + text cards.
     """
     q = query.strip()
     if not q:
-        return [], "⚠️ Please enter a request first."
+        return "<p>⚠️ Please enter a request first.</p>"
 
-    # 1) LLM Markdown recommendations
     try:
         raw_md = get_recommendations(q)
     except Exception as e:
-        return [], f"❌ An error occurred: {e}"
+        return f"<p>❌ An error occurred: {e}</p>"
 
-    # 2) Extract titles and fetch cover images
-    titles = extract_titles(raw_md)
-    gallery_items: list[tuple[str, str]] = []
-    for title in titles:
+    recs = parse_recommendations(raw_md)
+    if not recs:
+        return "<p>⚠️ No recommendations found.</p>"
+
+    # Build individual cards
+    cards_html = []
+    for rec in recs:
+        # Fetch cover image URL
         try:
-            hits = search_anime(search_term=title, per_page=1)
+            hits = search_anime(search_term=rec.title, per_page=1)
             if hits:
-                url = hits[0]["coverImage"]["medium"]
-                gallery_items.append((url, title))
+                img_url = hits[0]['coverImage']['medium']
             else:
-                # placeholder if no hits
-                gallery_items.append(("https://via.placeholder.com/150?text=No+Image", title))
+                img_url = 'https://via.placeholder.com/200x300?text=No+Image'
         except Exception:
-            gallery_items.append(("https://via.placeholder.com/150?text=Error", title))
+            img_url = 'https://via.placeholder.com/200x300?text=Error'
 
-    return gallery_items, raw_md
+        card = f"""
+        <div style="flex:0 0 200px; margin:10px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#fff;">
+          <img src="{img_url}" alt="{rec.title}" style="width:100%; height:auto; object-fit:cover;"/>
+          <div style="padding:8px;">
+            <h4 style="margin:0 0 4px; font-size:1rem;">{rec.title}</h4>
+            <p style="margin:0; font-size:0.85rem; color:#333;">{rec.desc}</p>
+          </div>
+        </div>
+        """
+        cards_html.append(card)
 
-# Gradio UI setup
-with gr.Blocks(
-    title="Osusume",
-    css="""
-    /* Round and shadow gallery images */
-    #cover-gallery img {
-        border-radius: 0.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        object-fit: cover;
-    }
-    /* Hide gallery if no items */
-    .gradio-gallery.empty { display: none; }
+    # Wrap cards in a flex container
+    html = f"""
+    <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+      {''.join(cards_html)}
+    </div>
     """
-) as demo:
-    gr.Markdown(INTRO)
+    return html
 
+# Gradio UI
+with gr.Blocks(title="Osusume") as demo:
+    gr.Markdown(INTRO)
     with gr.Row():
         inp = gr.Textbox(
             label="Your request",
@@ -102,23 +109,10 @@ with gr.Blocks(
         )
         btn = gr.Button("Recommend", variant="primary")
 
-    gallery = gr.Gallery(
-        label="Recommendations",
-        columns=5,
-        elem_id="cover-gallery"
-    )
-    out_md = gr.Markdown()
+    card_output = gr.HTML()
 
-    btn.click(
-        fn=recommend_cb,
-        inputs=inp,
-        outputs=[gallery, out_md]
-    )
-    inp.submit(
-        fn=recommend_cb,
-        inputs=inp,
-        outputs=[gallery, out_md]
-    )
+    btn.click(fn=recommend_cb, inputs=inp, outputs=card_output)
+    inp.submit(fn=recommend_cb, inputs=inp, outputs=card_output)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     demo.launch(server_port=7860)
