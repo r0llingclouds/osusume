@@ -1,9 +1,10 @@
 import gradio as gr
 from service import get_recommendations
+import os
+import base64
 
-# Intro text
-INTRO = (
-    "## Osusume – AI‑powered anime recommender  \n"
+# Intro text parts
+INTRO_TEXT = (
     "Describe what you feel like watching and press **Recommend**.  \n"
     "_Examples_:  \n"
     "• I want an isekai anime with some comedy  \n"
@@ -51,16 +52,61 @@ def recommend_cb(query: str) -> str:
     """
     return html
 
+# Get logo as base64 for embedding
+logo_path = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), "media", "logo.png"))
+with open(logo_path, "rb") as f:
+    logo_data = f.read()
+    encoded_logo = base64.b64encode(logo_data).decode("utf-8")
+
+# Custom header HTML with perfect alignment
+header_html = f'''
+<div style="display:flex; width:100%; align-items:flex-start; margin:0; padding:0;">
+    <div style="flex:3; margin:0; padding:0;">
+        <h1 style="margin:0; padding:0; font-size:28px; line-height:1.2;">Osusume – AI‑powered anime recommender</h1>
+        <p style="margin-top:6px; margin-bottom:0; padding:0;">Describe what you feel like watching and press <strong>Recommend</strong>.</p>
+        <p style="margin-top:10px; margin-bottom:3px; padding:0;"><em>Examples:</em></p>
+        <ul style="margin:0; padding-left:20px;">
+            <li style="margin:0; padding:0;">I want an isekai anime with some comedy</li>
+            <li style="margin:0; padding:0;">Give me something like Ghost in the Shell</li>
+            <li style="margin:0; padding:0;">A dark fantasy from 2020</li>
+        </ul>
+    </div>
+    <div style="flex:2; margin:0; padding:0; display:flex; justify-content:flex-end;">
+        <img src="data:image/png;base64,{encoded_logo}" style="height:auto; width:450px; margin:0; padding:0; object-fit:contain;">
+    </div>
+</div>
+'''
+
 # Gradio UI
 with gr.Blocks(
     title="Osusume",
     css="""
     /* Set overall background to match dark theme */
     body { background-color: #000; }
+    
+    /* Make sure content is aligned properly */
+    .gradio-container {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    
+    /* Custom header styling */
+    .custom-header {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Request box position */
+    .request-box {
+        margin-top: 20px !important;
+    }
     """
 ) as demo:
-    gr.Markdown(INTRO)
-    with gr.Row():
+    # Custom HTML header with perfect alignment
+    gr.HTML(header_html, elem_classes=["custom-header"])
+    
+    with gr.Row(elem_classes=["request-box"]):
         inp = gr.Textbox(
             label="Your request",
             placeholder="I want an anime like Akira",
