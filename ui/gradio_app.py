@@ -1,5 +1,5 @@
 """
-Gradio front‑end for Osusume with integrated cover‑art + description cards, vertically stacked.
+Gradio front‑end for Osusume with horizontal cover‑art + description cards.
 Run with: python -m ui.gradio_app
 """
 
@@ -48,7 +48,7 @@ def parse_recommendations(markdown_text: str) -> list[Recommendation]:
 
 def recommend_cb(query: str) -> str:
     """
-    Returns HTML string rendering a vertical stack of cover + text cards.
+    Returns HTML string rendering horizontal cards: text on left, cover image on right.
     """
     q = query.strip()
     if not q:
@@ -72,19 +72,20 @@ def recommend_cb(query: str) -> str:
         except Exception:
             img_url = 'https://via.placeholder.com/200x300?text=Error'
 
-        # Build card HTML
+        # Build horizontal card HTML
         card = f"""
-        <div style="width:320px; margin:20px auto; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#fff;">
-          <img src="{img_url}" alt="{rec.title}" style="width:100%; height:auto; object-fit:cover;"/>
-          <div style="padding:12px;">
-            <h4 style="margin:0 0 8px; font-size:1.1rem;">{rec.title}</h4>
-            <p style="margin:0; font-size:0.9rem; color:#333;">{rec.desc}</p>
+        <div style="display:flex; flex-direction:row; width:90%; max-width:800px; margin:20px auto; "
+                   "border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#fff;">
+          <div style="flex:1; padding:16px;">
+            <h3 style="margin:0 0 8px; font-size:1.2rem;">{rec.title}</h3>
+            <p style="margin:0; font-size:1rem; color:#333;">{rec.desc}</p>
           </div>
+          <img src="{img_url}" alt="{rec.title}" style="width:200px; height:auto; object-fit:cover;"/>
         </div>
         """
         cards_html.append(card)
 
-    # Wrap cards in a vertical flex container with spacing
+    # Wrap cards vertically stacked
     html = f"""
     <div style="display:flex; flex-direction:column; align-items:center; gap:16px; padding-bottom:20px;">
       {''.join(cards_html)}
