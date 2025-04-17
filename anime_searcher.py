@@ -149,3 +149,15 @@ def search_anime(
     
     response = fetch_from_anilist(query, variables)
     return response['data']['Page']['media']
+
+
+# search_results = search_anime(
+#     tags=["Volleyball"],
+#     per_page=5
+# )
+# print("All results:")
+# for anime in search_results:
+#     print(f"- {anime['title']['english'] or anime['title']['romaji']}")
+#     print(f"  Genres: {', '.join(anime['genres'])}")
+#     print(f"  Tags: {', '.join([tag['name'] for tag in anime['tags']])}")
+#     print("-" * 60)
