@@ -15,14 +15,22 @@ Features
 
 from __future__ import annotations
 
+# get parent directory
+import os
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# add parent directory to sys.path
+import sys
+sys.path.append(parent_dir)
+
 import logging
 from typing import Any, Dict, List, Optional, Type, TypedDict
 
 import requests
 from pydantic import BaseModel, Field, field_validator
 from crewai.tools import BaseTool
-from anilist_query_searcher import search_anime
-from analyzer import get_relevant_tags_and_genres
+from src.anilist_query_searcher import search_anime
+from src.analyzer import get_relevant_tags_and_genres
 # --------------------------------------------------------------------------- #
 #  Configuration & logging
 # --------------------------------------------------------------------------- #

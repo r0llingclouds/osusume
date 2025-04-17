@@ -1,3 +1,12 @@
+# get parent directory
+import os
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# add parent directory to sys.path
+import sys
+sys.path.append(parent_dir)
+
+
 from openai import OpenAI
 client = OpenAI()
 

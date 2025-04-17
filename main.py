@@ -1,6 +1,6 @@
 from crewai import Agent, Crew, Task, Process, LLM
-from request_parser import AnimeSearchParams, OFFICIAL_GENRES
-from recommender import SearchAnimeTool
+from src.request_parser import AnimeSearchParams, OFFICIAL_GENRES
+from src.recommender import SearchAnimeTool
 import os
 
 
@@ -58,7 +58,6 @@ recommendation_task = Task(
     agent=anime_researcher,
     llm=llm
 )
-
 
 crew = Crew(
     agents=[mapper, anime_researcher],
