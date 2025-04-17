@@ -21,7 +21,8 @@ from typing import Any, Dict, List, Optional, Type, TypedDict
 import requests
 from pydantic import BaseModel, Field, field_validator
 from crewai.tools import BaseTool
-
+from anilist_query_searcher import search_anime
+from analyzer import get_relevant_tags_and_genres
 # --------------------------------------------------------------------------- #
 #  Configuration & logging
 # --------------------------------------------------------------------------- #

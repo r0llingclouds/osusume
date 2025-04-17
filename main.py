@@ -1,10 +1,7 @@
-from get_relevant_tags_and_genres import get_relevant_tags_and_genres
-from anime_searcher import search_anime
-from request_parser import mapper, map_request
 from crewai import Agent, Crew, Task, Process, LLM
+from request_parser import AnimeSearchParams, OFFICIAL_GENRES
 from recommender import SearchAnimeTool
 import os
-from request_parser import AnimeSearchParams, OFFICIAL_GENRES
 
 
 
