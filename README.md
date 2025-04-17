@@ -224,7 +224,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Arigatou
 
-- [CrewAI](https://github.com/crewai/crewai) for the multi-agent framework
+- [CrewAI](https://www.crewai.com) for the multi-agent framework
 - [AniList](https://anilist.co) for their comprehensive anime database and GraphQL API
 - [Gradio](https://gradio.app) for the simple web UI framework
 - [OpenAI](https://openai.com) for GPT-4.1
