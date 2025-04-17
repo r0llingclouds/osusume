@@ -1,6 +1,6 @@
 # 🌟 Osusume: Agentic-AI Anime Recommender System
 
-![Osusume](/Media/logo.png)
+![Osusume](/media/logo.png)
 
 ## 📖 Overview
 
