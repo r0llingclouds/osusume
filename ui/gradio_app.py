@@ -1,5 +1,5 @@
 """
-Gradio front‑end for Osusume with integrated cover‑art + description cards.
+Gradio front‑end for Osusume with integrated cover‑art + description cards, vertically stacked.
 Run with: python -m ui.gradio_app
 """
 
@@ -19,7 +19,7 @@ INTRO = (
     "• A dark fantasy from 2020"
 )
 
-# Regex to capture title and description from each bulleted line
+# Regex to capture title and description from each numbered line
 RE_LINE = re.compile(r"^(?P<idx>\d+)\.\s*(?:\*([^*]+)\*|([^–—\-]+))\s*[–—\-]\s*(?P<desc>.+)$")
 
 class Recommendation(NamedTuple):
@@ -39,7 +39,6 @@ def parse_recommendations(markdown_text: str) -> list[Recommendation]:
         m = RE_LINE.match(line)
         if not m:
             continue
-        # Title may be in group 2 (asterisk) or group 3 (plain)
         title_raw = m.group(2) or m.group(3)
         title = title_raw.strip()
         desc = m.group('desc').strip()
@@ -49,7 +48,7 @@ def parse_recommendations(markdown_text: str) -> list[Recommendation]:
 
 def recommend_cb(query: str) -> str:
     """
-    Returns HTML string rendering a flex‑box of cover + text cards.
+    Returns HTML string rendering a vertical stack of cover + text cards.
     """
     q = query.strip()
     if not q:
@@ -64,33 +63,30 @@ def recommend_cb(query: str) -> str:
     if not recs:
         return "<p>⚠️ No recommendations found.</p>"
 
-    # Build individual cards
     cards_html = []
     for rec in recs:
-        # Fetch cover image URL
+        # Fetch cover image URL or placeholder
         try:
             hits = search_anime(search_term=rec.title, per_page=1)
-            if hits:
-                img_url = hits[0]['coverImage']['medium']
-            else:
-                img_url = 'https://via.placeholder.com/200x300?text=No+Image'
+            img_url = hits[0]['coverImage']['medium'] if hits else 'https://via.placeholder.com/200x300?text=No+Image'
         except Exception:
             img_url = 'https://via.placeholder.com/200x300?text=Error'
 
+        # Build card HTML
         card = f"""
-        <div style="flex:0 0 200px; margin:10px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#fff;">
+        <div style="width:320px; margin:20px auto; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#fff;">
           <img src="{img_url}" alt="{rec.title}" style="width:100%; height:auto; object-fit:cover;"/>
-          <div style="padding:8px;">
-            <h4 style="margin:0 0 4px; font-size:1rem;">{rec.title}</h4>
-            <p style="margin:0; font-size:0.85rem; color:#333;">{rec.desc}</p>
+          <div style="padding:12px;">
+            <h4 style="margin:0 0 8px; font-size:1.1rem;">{rec.title}</h4>
+            <p style="margin:0; font-size:0.9rem; color:#333;">{rec.desc}</p>
           </div>
         </div>
         """
         cards_html.append(card)
 
-    # Wrap cards in a flex container
+    # Wrap cards in a vertical flex container with spacing
     html = f"""
-    <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+    <div style="display:flex; flex-direction:column; align-items:center; gap:16px; padding-bottom:20px;">
       {''.join(cards_html)}
     </div>
     """
