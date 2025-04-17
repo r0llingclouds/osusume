@@ -1,5 +1,5 @@
 """
-Gradio front‑end for Osusume with horizontal cover‑art + description cards.
+Gradio front‑end for Osusume with horizontal cover‑art + description cards (white text).
 Run with: python -m ui.gradio_app
 """
 
@@ -48,20 +48,20 @@ def parse_recommendations(markdown_text: str) -> list[Recommendation]:
 
 def recommend_cb(query: str) -> str:
     """
-    Returns HTML string rendering horizontal cards: text on left, cover image on right.
+    Returns HTML string rendering horizontal cards: white text on dark theme.
     """
     q = query.strip()
     if not q:
-        return "<p>⚠️ Please enter a request first.</p>"
+        return "<p style='color:white;'>⚠️ Please enter a request first.</p>"
 
     try:
         raw_md = get_recommendations(q)
     except Exception as e:
-        return f"<p>❌ An error occurred: {e}</p>"
+        return f"<p style='color:white;'>❌ An error occurred: {e}</p>"
 
     recs = parse_recommendations(raw_md)
     if not recs:
-        return "<p>⚠️ No recommendations found.</p>"
+        return "<p style='color:white;'>⚠️ No recommendations found.</p>"
 
     cards_html = []
     for rec in recs:
@@ -72,13 +72,13 @@ def recommend_cb(query: str) -> str:
         except Exception:
             img_url = 'https://via.placeholder.com/200x300?text=Error'
 
-        # Build horizontal card HTML
+        # Build horizontal card HTML with white text
         card = f"""
         <div style="display:flex; flex-direction:row; width:90%; max-width:800px; margin:20px auto; "
-                   "border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#fff;">
-          <div style="flex:1; padding:16px;">
-            <h3 style="margin:0 0 8px; font-size:1.2rem;">{rec.title}</h3>
-            <p style="margin:0; font-size:1rem; color:#333;">{rec.desc}</p>
+                   "border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); overflow:hidden; background:#111;">
+          <div style="flex:1; padding:16px; color:white;">
+            <h3 style="margin:0 0 8px; font-size:1.2rem; color:white;">{rec.title}</h3>
+            <p style="margin:0; font-size:1rem; color:white;">{rec.desc}</p>
           </div>
           <img src="{img_url}" alt="{rec.title}" style="width:200px; height:auto; object-fit:cover;"/>
         </div>
@@ -94,7 +94,13 @@ def recommend_cb(query: str) -> str:
     return html
 
 # Gradio UI
-with gr.Blocks(title="Osusume") as demo:
+with gr.Blocks(
+    title="Osusume",
+    css="""
+    /* Set overall background to match dark theme */
+    body { background-color: #000; }
+    """
+) as demo:
     gr.Markdown(INTRO)
     with gr.Row():
         inp = gr.Textbox(
